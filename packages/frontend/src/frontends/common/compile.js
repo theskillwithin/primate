@@ -32,7 +32,7 @@ export default async ({
 
   // vue does not yet support layouting
   if (create_root !== undefined) {
-    const root = await compile(create_root(app.layout.depth));
+    const root = await compile(create_root(app.layout.depth, app.config.http));
     const to = app.runpath(location.server, filename);
     await to.file.write(root);
   }

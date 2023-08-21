@@ -1,5 +1,6 @@
 import {Response, Status, MediaType} from "runtime-compat/http";
 import {map} from "runtime-compat/async";
+import {valmap} from "runtime-compat/object";
 import register from "./register.js";
 
 export default config => {
@@ -33,13 +34,27 @@ export default config => {
         });
       }
 
+      const subscribers = data.map(datum => {
+        return Object.fromEntries(Object.entries(datum)
+          .filter(([, value]) => value.live !== undefined)
+          .map(([key, value]) => {
+            value.subscribe(next => app.live2.send(value.id, next));
+            return [key, value.id];
+          }));
+      });
+
+      const flattened_data = data.map(datum =>
+        valmap(datum, value => value?.live === undefined ? value : value.value)
+      );
+
       const imported = (await import(root)).default;
       const {body, head} = render(imported, {
         components: components.map(({component}) => component),
-        data,
+        data: flattened_data,
+        subscribers,
       });
 
-      const code = client({names, data}, options);
+      const code = client({names, data: flattened_data, subscribers}, options);
 
       await app.publish({code, type: "module", inline: true});
       // needs to be called before app.render

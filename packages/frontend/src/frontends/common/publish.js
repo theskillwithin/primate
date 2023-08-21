@@ -51,7 +51,7 @@ export default async ({
     }
   }));
   {
-    const root = create_root(app.layout.depth);
+    const root = create_root(app.layout.depth, app.config.http);
     // root has no css
     const {js} = await compile(root);
     const code = js.replaceAll(extensions.from, extensions.to);
